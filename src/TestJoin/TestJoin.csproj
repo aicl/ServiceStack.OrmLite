@@ -5,11 +5,10 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{85DF0278-488D-460B-8B40-737E07089465}</ProjectGuid>
+    <ProjectGuid>{FB194374-5D8A-4B45-ACE9-8D3E6EF4405F}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>TestClassWriter</RootNamespace>
-    <AssemblyName>TestClassWriter</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <RootNamespace>TestJoin</RootNamespace>
+    <AssemblyName>TestJoin</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,7 +22,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -33,14 +32,14 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
-    <Reference Include="ServiceStack.Common, Version=3.8.3.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\lib\ServiceStack.Common.dll</HintPath>
+    <Reference Include="ServiceStack.Common">
+      <HintPath>..\..\lib\ServiceStack.Common.dll</HintPath>
     </Reference>
-    <Reference Include="ServiceStack.Interfaces, Version=3.8.3.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\lib\ServiceStack.Interfaces.dll</HintPath>
+    <Reference Include="ServiceStack.Interfaces">
+      <HintPath>..\..\lib\ServiceStack.Interfaces.dll</HintPath>
     </Reference>
-    <Reference Include="ServiceStack.Text, Version=3.8.3.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\lib\ServiceStack.Text.dll</HintPath>
+    <Reference Include="ServiceStack.Text">
+      <HintPath>..\..\lib\ServiceStack.Text.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -49,13 +48,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\..\ServiceStack.OrmLite\ServiceStack.OrmLite.csproj">
+    <ProjectReference Include="..\ServiceStack.OrmLite\ServiceStack.OrmLite.csproj">
       <Project>{96179AC6-F6F1-40C3-9FDD-4F6582F54C5C}</Project>
       <Name>ServiceStack.OrmLite</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\ServiceStack.OrmLite.Firebird\ServiceStack.OrmLite.Firebird.csproj">
-      <Project>{317B64BA-D7A6-4A15-8719-821B38147C63}</Project>
-      <Name>ServiceStack.OrmLite.Firebird</Name>
+    <ProjectReference Include="..\TestCommon\TestCommon.csproj">
+      <Project>{EEF45A05-6CAA-4D54-8FD8-60570D876155}</Project>
+      <Name>TestCommon</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

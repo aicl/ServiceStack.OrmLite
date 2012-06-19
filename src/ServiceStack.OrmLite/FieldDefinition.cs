@@ -82,5 +82,10 @@ namespace ServiceStack.OrmLite
 			get;set;
 		}
 		
+        // select "st"."SomeField" as "FieldAlias" from "someTable" "st" order by "FieldAlias"
+       public string FieldAlias{ get; set;} 
+
+       public string BelongsToAlias{ get; set;} //"st"
+
 	}
 }

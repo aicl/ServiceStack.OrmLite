@@ -129,6 +129,9 @@
     <Compile Include="Expressions\SqlExpressionVisitor.cs" />
     <Compile Include="Expressions\WriteExtensions.cs" />
     <Compile Include="Expressions\Sql.cs" />
+    <Compile Include="JoinAttributes\BelongsToAttribute.cs" />
+    <Compile Include="JoinAttributes\JoinToAttribute.cs" />
+    <Compile Include="JoinAttributes\SelectFromAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -158,4 +161,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Folder Include="JoinAttributes\" />
+  </ItemGroup>
 </Project>

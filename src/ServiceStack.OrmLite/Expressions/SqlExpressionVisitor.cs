@@ -785,14 +785,24 @@ namespace ServiceStack.OrmLite
 		
 		protected virtual string GetFieldName(string name){
 			
-			if(useFieldName){
-				FieldDefinition fd = modelDef.FieldDefinitions.FirstOrDefault(x=>x.Name==name);
-				string fn = fd!=default(FieldDefinition)? fd.FieldName:name;
-				return OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn);
-			}
-			else{
-				return name;
-			}   
+            if(!useFieldName) return name;
+			
+			FieldDefinition fd = modelDef.FieldDefinitions.FirstOrDefault(x=>x.Name==name);
+			
+            string fn=name;
+            string bt= string.Empty;
+
+            if(fd!=default(FieldDefinition)){
+               fn = fd.FieldName;
+               bt = fd.BelongsToAlias;
+            }   
+
+            return (string.IsNullOrEmpty(bt))?
+                OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn):
+                    string.Format("{0}.{1}",
+                                  OrmLiteConfig.DialectProvider.GetQuotedColumnName(bt),
+                                  OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn));
+			
 		}
 		
 				
@@ -862,12 +872,20 @@ namespace ServiceStack.OrmLite
 		
 		private void BuildSelectExpression(string fields, bool distinct){
 				
-			selectExpression= string.Format("SELECT {0}{1} \nFROM {2}",
-				(distinct?"DISTINCT ":""),
-				(string.IsNullOrEmpty(fields)?
-					OrmLiteConfig.DialectProvider.GetColumnNames(modelDef):
-					fields),
-				OrmLiteConfig.DialectProvider.GetQuotedTableName(modelDef));
+			            if(!string.IsNullOrEmpty(fields)){
+               selectExpression= string.Format("SELECT {0}{1} \nFROM {2}{3}{4}",
+                   (distinct?"DISTINCT ":""),
+                   fields,
+                   OrmLiteConfig.DialectProvider.GetQuotedTableName(modelDef),
+                   (string.IsNullOrEmpty(modelDef.TableAlias)?
+                       "":
+                       " "+OrmLiteConfig.DialectProvider.GetQuotedName(modelDef.TableAlias)),
+                   (string.IsNullOrEmpty(modelDef.Join)?"": modelDef.Join));
+           }
+           else{
+               selectExpression= OrmLiteConfig.DialectProvider.ToSelectStatement(typeof(T),string.Empty);
+           }
+
 		}
 		
         public IList<string> GetAllFields(){

@@ -411,8 +411,13 @@ namespace ServiceStack.OrmLite
 
 			if (isFullSelectStatement) return sqlFilter.SqlFormat(filterParams);
 
-		    sql.AppendFormat("SELECT {0} FROM {1}", tableType.GetColumnNames(),
-		                     GetQuotedTableName(modelDef));
+            sql.AppendFormat("SELECT {0} FROM {1}{2}{3}", tableType.GetColumnNames(),
+                             GetQuotedTableName(modelDef),
+                             (modelDef.TableAlias.IsNullOrEmpty()?
+             "":
+             " "+GetQuotedColumnName(modelDef.TableAlias)),
+                             (modelDef.Join.IsNullOrEmpty()?"":modelDef.Join));
+   
 			if (!string.IsNullOrEmpty(sqlFilter))
 			{
 				sqlFilter = sqlFilter.SqlFormat(filterParams);
@@ -442,6 +447,7 @@ namespace ServiceStack.OrmLite
                     
             foreach (var fieldDef in modelDef.FieldDefinitions)
             {
+                if( !fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
                 if (fieldDef.AutoIncrement) continue;
 				//insertFields contains Property "Name" of fields to insert ( that's how expressions work )
 				if( insertFields.Count>0 && !insertFields.Contains( fieldDef.Name )) continue;
@@ -589,6 +595,7 @@ namespace ServiceStack.OrmLite
             
             foreach (var fieldDef in modelDef.FieldDefinitions)
             {
+                if(!fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
                 try
                 {
                     if (fieldDef.IsPrimaryKey && updateFields.Count==0)

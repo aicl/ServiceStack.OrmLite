@@ -147,9 +147,14 @@ namespace ServiceStack.OrmLite.Firebird
 
 			if (isFullSelectStatement) 	return sqlFilter.SqlFormat(filterParams);
 			
-			sql.AppendFormat("SELECT {0} \nFROM {1}", 
-			                 GetColumnNames(modelDef), 
-			                 GetQuotedTableName(modelDef));
+			sql.AppendFormat("SELECT {0} \nFROM {1}{2}{3}", 
+                             GetColumnNames(modelDef), 
+                             GetQuotedTableName(modelDef),
+                             (modelDef.TableAlias.IsNullOrEmpty()?
+             "":
+             " "+GetQuotedName(modelDef.TableAlias)),
+                             (modelDef.Join.IsNullOrEmpty()?"":modelDef.Join));
+
 			if (!string.IsNullOrEmpty(sqlFilter))
 			{
 				sqlFilter = sqlFilter.SqlFormat(filterParams);
@@ -174,7 +179,7 @@ namespace ServiceStack.OrmLite.Firebird
 			foreach (var fieldDef in modelDef.FieldDefinitions)
 			{
 				
-				if( fieldDef.IsComputed ) continue;
+				if( fieldDef.IsComputed || !fieldDef.BelongsToAlias.IsNullOrEmpty() ) continue; 
 				if( insertFields.Count>0 && ! insertFields.Contains( fieldDef.Name )) continue;
 				
 				if( (fieldDef.AutoIncrement || ! string.IsNullOrEmpty(fieldDef.Sequence)
@@ -239,6 +244,7 @@ namespace ServiceStack.OrmLite.Firebird
 									
 			foreach (var fieldDef in modelDef.FieldDefinitions)
 			{
+                if(!fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
 				if( fieldDef.IsComputed) continue;
 				
 				try
@@ -673,11 +679,17 @@ namespace ServiceStack.OrmLite.Firebird
 		{
 			if (QuoteNames) return modelDef.GetColumnNames();
 			var sqlColumns = new StringBuilder();
-			modelDef.FieldDefinitions.ForEach(x => 
-				sqlColumns.AppendFormat("{0} {1}", 
-				sqlColumns.Length > 0 ? "," : "",
-				GetQuotedColumnName(x.FieldName)));
-
+			modelDef.FieldDefinitions.
+                ForEach(x=>sqlColumns.AppendFormat("{0}{1}{2}", sqlColumns.Length > 0 ? "," : "",
+                                                   (string.IsNullOrEmpty(x.BelongsToAlias)?
+                 Quote( x.FieldName):
+                 string.Format("{0}.{1}",
+                              Quote( x.BelongsToAlias),
+                              Quote( x.FieldName))),
+                                                   (x.FieldAlias.IsNullOrEmpty()?
+                 "":
+                 string.Format(" as \"{0}\"", x.FieldAlias) )));
+			
 			return sqlColumns.ToString();
 		}
 

@@ -10,6 +10,7 @@
 //
 
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -47,21 +48,84 @@ namespace ServiceStack.OrmLite
 			typeModelDefinitionMap = new Dictionary<Type, ModelDefinition>();
 		}
 
-		internal static ModelDefinition GetModelDefinition(this Type modelType)
-		{
+        internal static ModelDefinition GetModelDefinition(this Type modelType)
+        {
             ModelDefinition modelDef;
             
             if (typeModelDefinitionMap.TryGetValue(modelType, out modelDef))
                 return modelDef;
+            
+            var fromAttr= modelType.FirstAttribute<SelectFromAttribute>();
+            string tableAlias=null;
+            string modelName=null;
+            Type fromType=null;
+            StringBuilder join = new StringBuilder();
+            
+            if (fromAttr!=null){
+                tableAlias= fromAttr.Alias;
+                fromType=  fromAttr.From;
+                modelName= fromType.GetModelDefinition().ModelName;
+            }
+            else if (modelType.BaseType!=typeof(Object)){
+                fromType= modelType.BaseType;
+                modelName=fromType.GetModelDefinition().ModelName;
+                tableAlias= modelName;
+            }
+            
+            //if(fromType!=null){
+                
+                var joinAttrList = modelType.GetCustomAttributes(typeof(JoinToAttribute), true).ToList()
+                    .ConvertAll(x => (JoinToAttribute)x).OrderBy(x=>x.Order).ToList();
+                
+                foreach(var ja in joinAttrList){
+                    string parentField;
+                    string childField;
 
+                    FieldDefinition fd;
+                    if(ja.Parent==null && fromType==null)
+                        fd=null;
+                    else 
+                        fd= ((ja.Parent!=null)? ja.Parent:fromType).
+                        GetModelDefinition().FieldDefinitions.FirstOrDefault(x=>x.Name==ja.ParentProperty);
+
+                    if(fd!=default(FieldDefinition) ) 
+                        parentField= fd.FieldName;
+                    else
+                        parentField= ja.ParentProperty;
+                    
+                    fd= ja.Child.GetModelDefinition().FieldDefinitions.FirstOrDefault(x=>x.Name==ja.ChildProperty);
+                    if(fd!=default(FieldDefinition) ) 
+                        childField= fd.FieldName;
+                    else
+                        childField= ja.ChildProperty;
+                    
+                    join.AppendFormat("\n{0} Join {1} {2} on {3}={4}",ja.JoinType,
+                        OrmLiteConfig.DialectProvider.GetQuotedName( ja.Child.GetModelDefinition().ModelName),
+                        OrmLiteConfig.DialectProvider.GetQuotedName(ja.ChildAlias), 
+                        (ja.ParentAlias.IsNullOrEmpty() && tableAlias.IsNullOrEmpty())?
+                                  string.Format("{0}",OrmLiteConfig.DialectProvider.GetQuotedName(parentField))
+                                  :string.Format("{0}.{1}",
+                            OrmLiteConfig.DialectProvider.GetQuotedName(ja.ParentAlias??tableAlias),
+                            OrmLiteConfig.DialectProvider.GetQuotedName(parentField)),
+
+
+                        string.Format("{0}.{1}",
+                            OrmLiteConfig.DialectProvider.GetQuotedName(ja.ChildAlias),
+                            OrmLiteConfig.DialectProvider.GetQuotedName(childField))
+                        );
+                }
+            //}
+            
             var modelAliasAttr = modelType.FirstAttribute<AliasAttribute>();
-		    var schemaAttr = modelType.FirstAttribute<SchemaAttribute>();
+            var schemaAttr = modelType.FirstAttribute<SchemaAttribute>();
             modelDef = new ModelDefinition
             {
                 ModelType = modelType,
-                Name = modelType.Name,
+                Name = modelName?? modelType.Name,
                 Alias = modelAliasAttr != null ? modelAliasAttr.Name : null,
-                Schema = schemaAttr != null ? schemaAttr.Name : null
+                Schema = schemaAttr != null ? schemaAttr.Name : null,
+                TableAlias= tableAlias,
+                Join = join.Length==0? null: join.ToString()
             };
 
             modelDef.CompositeIndexes.AddRange(
@@ -76,15 +140,15 @@ namespace ServiceStack.OrmLite
             var i = 0;
             foreach (var propertyInfo in objProperties)
             {
-				if (propertyInfo.FirstAttribute<IgnoreAttribute>()!=null) continue;
-				var sequenceAttr = propertyInfo.FirstAttribute<SequenceAttribute>();
-				var computeAttr= propertyInfo.FirstAttribute<ComputeAttribute>();
-				var pkAttribute = propertyInfo.FirstAttribute<PrimaryKeyAttribute>();
-				var decimalAttribute = propertyInfo.FirstAttribute<DecimalLengthAttribute>();
+                if (propertyInfo.FirstAttribute<IgnoreAttribute>()!=null) continue;
+                var sequenceAttr = propertyInfo.FirstAttribute<SequenceAttribute>();
+                var computeAttr= propertyInfo.FirstAttribute<ComputeAttribute>();
+                var pkAttribute = propertyInfo.FirstAttribute<PrimaryKeyAttribute>();
+                var decimalAttribute = propertyInfo.FirstAttribute<DecimalLengthAttribute>();
                 var isFirst = i++ == 0;
 
-                var isPrimaryKey = propertyInfo.Name == OrmLiteConfig.IdField || (!hasIdField && isFirst)
-					|| pkAttribute != null;
+                var isPrimaryKey = propertyInfo.Name ==OrmLiteConfig.IdField || (!hasIdField && isFirst)
+                    || pkAttribute != null;
 
                 var isNullableType = IsNullableType(propertyInfo.PropertyType);
 
@@ -107,14 +171,40 @@ namespace ServiceStack.OrmLite
                 var defaultValueAttr = propertyInfo.FirstAttribute<DefaultAttribute>();
 
                 var referencesAttr = propertyInfo.FirstAttribute<ReferencesAttribute>();
-				
-				if(decimalAttribute != null  && stringLengthAttr==null)
-					stringLengthAttr= new StringLengthAttribute(decimalAttribute.Precision);
-				
+                
+                if(decimalAttribute != null  && stringLengthAttr==null)
+                    stringLengthAttr= new StringLengthAttribute(decimalAttribute.Precision);
+                
+                var belongsToAttr= propertyInfo.FirstAttribute<BelongsToAttribute>();
+                
+                string fieldAlias=null;
+                string belongsToAlias=null;
+                string alias=null;
+                
+                if (belongsToAttr!=null){
+                    belongsToAlias= belongsToAttr.ParentAlias;
+                    fieldAlias = propertyInfo.Name;
+                    var fd= belongsToAttr.Parent.GetModelDefinition().FieldDefinitions.
+                        FirstOrDefault(x=>x.Name==(belongsToAttr.PropertyName?? propertyInfo.Name));
+                    if(fd!=default(FieldDefinition) ) 
+                        alias= fd.FieldName;
+                    else alias= propertyInfo.Name ;
+                }
+                else if(fromType != null && fromType != modelType){
+                    var fd= fromType.GetModelDefinition().FieldDefinitions.FirstOrDefault(x=>x.Name==propertyInfo.Name);
+                    if(fd!=default(FieldDefinition) ){
+                        alias= fd.FieldName;
+                        fieldAlias = propertyInfo.Name;
+                        belongsToAlias= tableAlias;
+                    }
+                }
+                
                 var fieldDefinition = new FieldDefinition
                 {
                     Name = propertyInfo.Name,
-                    Alias = aliasAttr != null ? aliasAttr.Name : null,
+                    Alias = alias?? (aliasAttr != null ? aliasAttr.Name : null),
+                    FieldAlias= fieldAlias,
+                    BelongsToAlias= belongsToAlias,
                     FieldType = propertyType,
                     PropertyInfo = propertyInfo,
                     IsNullable = isNullable,
@@ -127,18 +217,20 @@ namespace ServiceStack.OrmLite
                     ReferencesType = referencesAttr != null ? referencesAttr.Type : null,
                     GetValueFn = propertyInfo.GetPropertyGetterFn(),
                     SetValueFn = propertyInfo.GetPropertySetterFn(),
-					Sequence= sequenceAttr!=null?sequenceAttr.Name:string.Empty,
-					IsComputed= computeAttr!=null,
-					ComputeExpression=  computeAttr!=null? computeAttr.Expression: string.Empty,
-					Scale = decimalAttribute != null ? decimalAttribute.Scale : (int?)null,
+                    Sequence= sequenceAttr!=null?sequenceAttr.Name:string.Empty,
+                    IsComputed= computeAttr!=null,
+                    ComputeExpression=  computeAttr!=null? computeAttr.Expression: string.Empty,
+                    Scale = decimalAttribute != null ? decimalAttribute.Scale : (int?)null,
                 };
 
                 modelDef.FieldDefinitions.Add(fieldDefinition);
             }
+            modelDef.SqlSelectAllFromTable = "SELECT {0} FROM {1}{2}".Fmt(OrmLiteConfig.DialectProvider.GetColumnNames(modelDef),
+                OrmLiteConfig.DialectProvider.GetQuotedTableName(modelDef),
+                tableAlias.IsNullOrEmpty()?
+                    "":
+                    OrmLiteConfig.DialectProvider.GetQuotedName(tableAlias));
 
-		    modelDef.SqlSelectAllFromTable = "SELECT {0} FROM {1} ".Fmt(OrmLiteConfig.DialectProvider.GetColumnNames(modelDef),
-		                                                                OrmLiteConfig.DialectProvider.GetQuotedTableName(
-		                                                                    modelDef));
             Dictionary<Type, ModelDefinition> snapshot, newCache;
             do
             {
@@ -150,7 +242,7 @@ namespace ServiceStack.OrmLite
                 Interlocked.CompareExchange(ref typeModelDefinitionMap, newCache, snapshot), snapshot));
 
             return modelDef;
-		}
+        }
 
 	}
 }
