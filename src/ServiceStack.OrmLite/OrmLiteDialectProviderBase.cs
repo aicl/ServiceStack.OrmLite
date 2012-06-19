@@ -722,12 +722,14 @@ namespace ServiceStack.OrmLite
 		
 		public virtual string ToCreateTableStatement(Type tableType)
         {
-             var sbColumns = new StringBuilder();
+            var sbColumns = new StringBuilder();
             var sbConstraints = new StringBuilder();
 
             var modelDef = tableType.GetModelDefinition();
             foreach (var fieldDef in modelDef.FieldDefinitions)
             {
+                if(!fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
+
                 if (sbColumns.Length != 0) sbColumns.Append(", \n  ");
 
                 var columnDefinition = GetColumnDefinition(

@@ -51,12 +51,14 @@ namespace ServiceStack.OrmLite
         internal static ModelDefinition GetModelDefinition(this Type modelType)
         {
             ModelDefinition modelDef;
-            
+                        
             if (typeModelDefinitionMap.TryGetValue(modelType, out modelDef))
                 return modelDef;
-            
+
+            var modelAliasAttr = modelType.FirstAttribute<AliasAttribute>();
+
             var fromAttr= modelType.FirstAttribute<SelectFromAttribute>();
-            string tableAlias=null;
+            string tableAlias; //=null;
             string modelName=null;
             Type fromType=null;
             StringBuilder join = new StringBuilder();
@@ -71,6 +73,8 @@ namespace ServiceStack.OrmLite
                 modelName=fromType.GetModelDefinition().ModelName;
                 tableAlias= modelName;
             }
+            else
+                tableAlias=modelAliasAttr != null ? modelAliasAttr.Name : modelType.Name;
             
             //if(fromType!=null){
                 
@@ -116,7 +120,7 @@ namespace ServiceStack.OrmLite
                 }
             //}
             
-            var modelAliasAttr = modelType.FirstAttribute<AliasAttribute>();
+
             var schemaAttr = modelType.FirstAttribute<SchemaAttribute>();
             modelDef = new ModelDefinition
             {

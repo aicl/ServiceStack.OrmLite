@@ -5,11 +5,13 @@ using System.Text;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 
+using ServiceStack.Common;
 namespace ServiceStack.OrmLite
 {
 	public abstract class SqlExpressionVisitor<T>
 	{
 		
+        private bool excludeJoin=false;
 		private string selectExpression= string.Empty;
 		private string whereExpression;
 		private string groupBy= string.Empty;
@@ -45,13 +47,8 @@ namespace ServiceStack.OrmLite
 		/// raw Select expression: "Select SomeField1, SomeField2 from SomeTable"
 		/// </param>
 		public virtual SqlExpressionVisitor<T> Select(string selectExpression){
-			
-			if(string.IsNullOrEmpty(selectExpression)){
-				BuildSelectExpression(string.Empty,false);
-			}
-			else{
-				this.selectExpression=selectExpression;
-			}
+
+			this.selectExpression=selectExpression;
 			return this;
 		}
 		
@@ -871,8 +868,8 @@ namespace ServiceStack.OrmLite
 		
 		
 		private void BuildSelectExpression(string fields, bool distinct){
-				
-			            if(!string.IsNullOrEmpty(fields)){
+
+            if(fields.IsNullOrEmpty()) fields=GetColumnNames();
                selectExpression= string.Format("SELECT {0}{1} \nFROM {2}{3}{4}",
                    (distinct?"DISTINCT ":""),
                    fields,
@@ -880,16 +877,51 @@ namespace ServiceStack.OrmLite
                    (string.IsNullOrEmpty(modelDef.TableAlias)?
                        "":
                        " "+OrmLiteConfig.DialectProvider.GetQuotedName(modelDef.TableAlias)),
-                   (string.IsNullOrEmpty(modelDef.Join)?"": modelDef.Join));
-           }
-           else{
-               selectExpression= OrmLiteConfig.DialectProvider.ToSelectStatement(typeof(T),string.Empty);
-           }
+                   ((string.IsNullOrEmpty(modelDef.Join)|| ExcludeJoin)?"": modelDef.Join));
 
 		}
 		
         public IList<string> GetAllFields(){
-            return modelDef.FieldDefinitions.ConvertAll(r=>r.Name);
+
+            if(!ExcludeJoin) return modelDef.FieldDefinitions.ConvertAll(r=>r.Name);
+
+            return modelDef.FieldDefinitions.
+                Where(r=>r.BelongsToAlias.IsNullOrEmpty()).
+                    ToList().ConvertAll(x=>x.Name);
+        }
+
+        public bool ExcludeJoin{
+            get{return excludeJoin;}
+            set{ 
+                excludeJoin=value;
+                selectExpression=string.Empty;
+            }
+        }
+
+
+        private string GetColumnNames()
+        {
+            var fd= (ExcludeJoin? 
+                modelDef.FieldDefinitions.Where(r=>r.BelongsToAlias.IsNullOrEmpty()):
+                    modelDef.FieldDefinitions).ToList();
+
+            var sqlColumns = new StringBuilder();
+            fd.ForEach(x =>
+                       sqlColumns.AppendFormat("{0}{1}{2}",
+                                    sqlColumns.Length > 0 ? "," : "",
+                                    (string.IsNullOrEmpty(x.BelongsToAlias)?
+             string.Format("{0}.{1}",
+                          OrmLiteConfig.DialectProvider.GetQuotedColumnName( modelDef.TableAlias),
+                          OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.FieldName)):
+             string.Format("{0}.{1}",
+                          OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.BelongsToAlias),
+                          OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.FieldName))),
+                                    (string.IsNullOrEmpty(x.FieldAlias)?
+             "":
+             string.Format(" as {0}",OrmLiteConfig.DialectProvider.GetQuotedColumnName(x.FieldAlias)))));
+ 
+            return sqlColumns.ToString();
+
         }
 
 	}

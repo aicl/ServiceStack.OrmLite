@@ -11,7 +11,8 @@ namespace TestCommon
         {
         }
 
-        [Alias("CityId")]
+        //[Alias("CityId")]
+        [Alias("Id")]
         [AutoIncrement]
         public int Id { get; set;}
         public int CountryId { get; set;}

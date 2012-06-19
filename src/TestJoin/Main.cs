@@ -143,16 +143,28 @@ namespace TestJoin
 
                 try{
 
-                    var r0 = dbCmd.Select<TestPerson>();
-                    Console.WriteLine("Records en person: '{0}'", r0.Count);
 
                     var vis = ReadExtensions.CreateExpression<TestPerson>();
                     vis.Where(r=>r.Continent=="Europe");
                     Console.WriteLine(vis.ToSelectStatement());
+                    Console.WriteLine("-----------------------------------------");
 
+                    vis.ExcludeJoin=true;
+                    vis.Where();
+                    Console.WriteLine(vis.ToSelectStatement());
+                    Console.WriteLine("-----------------------------------------");
+
+
+                    var r0 = dbCmd.Select<TestPerson>();
+                    Console.WriteLine("Records en person: '{0}'", r0.Count);
+
+                    Console.WriteLine(vis.ToSelectStatement());
+                    Console.WriteLine("-----------------------------------------");
+
+                    vis.ExcludeJoin=false;
+                    vis.Where(r=>r.Continent=="Europe");
                     r0= dbCmd.Select(vis);
-                    Console.WriteLine("Records en person r.Continen=='Europe': '{0}'", r0.Count);
-
+                    Console.WriteLine("Records en person r.Continent=='Europe': '{0}'", r0.Count);
 
                     r0= dbCmd.Select<TestPerson>(r=> r.BirthCity=="London");
                     Console.WriteLine("Records en person r.BirthCity=='London': '{0}'", r0.Count);
@@ -166,6 +178,8 @@ namespace TestJoin
 
                     dbCmd.Update(tp);
                     Console.WriteLine("Actualizados : '{0}'",dbCmd.Update(tp, r=> r.Name, r=>r.Id==0));
+
+                    Console.WriteLine("Borrados : '{0}'",dbCmd.Delete<TestPerson>( r=>r.Id==0));
 
 
                     int expected=6;

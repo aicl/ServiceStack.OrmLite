@@ -11,7 +11,8 @@ namespace TestCommon
        {
        }
        
-       [Alias("PersonId")]
+       //[Alias("PersonId")]
+       [Alias("Id")]
        [AutoIncrement]
        public int Id { get; set;}
        [Alias("PersonName")]

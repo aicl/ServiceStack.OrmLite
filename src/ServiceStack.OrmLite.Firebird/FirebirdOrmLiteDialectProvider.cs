@@ -319,6 +319,7 @@ namespace ServiceStack.OrmLite.Firebird
             var modelDef = GetModel(tableType);
             foreach (var fieldDef in modelDef.FieldDefinitions)
             {
+                if(!fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
 				if (fieldDef.IsPrimaryKey) 
 				{
 					sbPk.AppendFormat(sbPk.Length != 0 ? ",{0}" : "{0}", GetQuotedColumnName(fieldDef.FieldName));
@@ -682,7 +683,9 @@ namespace ServiceStack.OrmLite.Firebird
 			modelDef.FieldDefinitions.
                 ForEach(x=>sqlColumns.AppendFormat("{0}{1}{2}", sqlColumns.Length > 0 ? "," : "",
                                                    (string.IsNullOrEmpty(x.BelongsToAlias)?
-                 Quote( x.FieldName):
+                 string.Format("{0}.{1}",
+                              Quote( modelDef.TableAlias),
+                              Quote( x.FieldName)):
                  string.Format("{0}.{1}",
                               Quote( x.BelongsToAlias),
                               Quote( x.FieldName))),

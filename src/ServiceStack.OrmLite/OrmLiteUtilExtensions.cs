@@ -67,7 +67,9 @@ namespace ServiceStack.OrmLite
                 sqlColumns.AppendFormat("{0}{1}{2}",
                    sqlColumns.Length > 0 ? "," : "",
                    (string.IsNullOrEmpty(x.BelongsToAlias)?
-                       OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.FieldName):
+                       string.Format("{0}.{1}",
+                           OrmLiteConfig.DialectProvider.GetQuotedColumnName( modelDef.TableAlias),
+                           OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.FieldName)):
                        string.Format("{0}.{1}",
                            OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.BelongsToAlias),
                            OrmLiteConfig.DialectProvider.GetQuotedColumnName( x.FieldName))
