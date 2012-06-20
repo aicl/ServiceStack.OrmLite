@@ -181,17 +181,21 @@ namespace AllDialectsTest
 					int year = DateTime.Today.AddYears(-20).Year;
 					var lastDay= new DateTime(year, 12, 31);
 					int expected=5;
+                    List<Author> result;
+                    Author author ;
+                    Author a = new Author() { Birthday = lastDay };
+                    int rows;
 
 					ev.Where(rn => rn.Birthday >= new DateTime(year, 1, 1) && rn.Birthday <= lastDay);
 					Console.WriteLine(ev.ToSelectStatement());
-					List<Author> result=dbCmd.Select(ev);
+					result=dbCmd.Select(ev);
 					Console.WriteLine(ev.WhereExpression);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
 					result = dbCmd.Select<Author>(qry => qry.Where(rn => rn.Birthday >= new DateTime(year, 1, 1) && rn.Birthday <= lastDay));
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
 					result = dbCmd.Select<Author>(rn => rn.Birthday >= new DateTime(year, 1, 1) && rn.Birthday <= lastDay);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
-					Author a = new Author() { Birthday = lastDay };
+
 					result = dbCmd.Select<Author>(rn => rn.Birthday >= new DateTime(year, 1, 1) && rn.Birthday <= a.Birthday);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
 
@@ -297,7 +301,7 @@ namespace AllDialectsTest
 					expected = 2;
 					var rate=0;
 					ev.Where(rn => rn.Rate == rate).Update(rn => rn.Active);
-					var rows = dbCmd.Update(new Author() { Active = false }, ev);
+					rows = dbCmd.Update(new Author() { Active = false }, ev);
 					Console.WriteLine(ev.WhereExpression);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, rows, expected == rows ? "OK" : "**************  FAILED ***************");
 
@@ -307,6 +311,7 @@ namespace AllDialectsTest
 					dbCmd.Insert(new Author() { Active = false, Rate = 0, Name = "Victor Grozny", Birthday = DateTime.Today.AddYears(-18) }, ev);
 					dbCmd.Insert(new Author() { Active = false, Rate = 0, Name = "Ivan Chorny", Birthday = DateTime.Today.AddYears(-19) }, ev);
 					ev.Where(rn => !rn.Active);
+                    Console.WriteLine(ev.ToSelectStatement());
 					result = dbCmd.Select(ev);
 					Console.WriteLine(ev.WhereExpression);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
@@ -331,7 +336,7 @@ namespace AllDialectsTest
 					Console.WriteLine(ev.WhereExpression);
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", expected, result.Count, expected == result.Count ? "OK" : "**************  FAILED ***************");
 					Console.WriteLine(ev.OrderByExpression);
-					var author = result.FirstOrDefault();
+					author = result.FirstOrDefault();
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", "Claudia Espinel", author.Name, "Claudia Espinel" == author.Name ? "OK" : "**************  FAILED ***************");
 
 					// select  only first 5 rows ....
@@ -356,7 +361,7 @@ namespace AllDialectsTest
 					result = dbCmd.Select(ev);
 					author = result.FirstOrDefault();
 					Console.WriteLine("Expected:{0}  Selected:{1}  {2}", "Claudia Espinel".ToUpper(), author.Name, "Claudia Espinel".ToUpper() == author.Name ? "OK" : "**************  FAILED ***************");
-					
+
 					//paging :
 					ev.Limit(0, 4);// first page, page size=4;
 					result = dbCmd.Select(ev);
@@ -479,7 +484,7 @@ namespace AllDialectsTest
 					                  expectedDate51, 
 					                  r51,
 					                  expectedDate51 == r51 ? "OK" : "**************  FAILED ***************");
-					
+
 					try{
 						var expectedBool= authors.Max(e=>e.Active);
 						bool r6 = dbCmd.GetScalar<Author,bool>(e=> Sql.Max(e.Active));
@@ -577,6 +582,7 @@ namespace AllDialectsTest
 				catch (Exception e)
 				{
 					Console.WriteLine(e.Message);
+                    Console.WriteLine(e);
 				}
 			}
 

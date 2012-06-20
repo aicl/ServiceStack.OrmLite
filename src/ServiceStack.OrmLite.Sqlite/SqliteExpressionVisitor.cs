@@ -101,7 +101,8 @@ namespace ServiceStack.OrmLite.Sqlite
 			case "Alias":
 			case "As":
 				return string.Format("{0} As {1}", r, 
-					OrmLiteConfig.DialectProvider.GetQuotedColumnName(RemoveQuoteFromAlias(args[0].ToString())));
+					OrmLiteConfig.DialectProvider.GetQuotedColumnName(
+                    RemoveQuoteFromAlias(RemoveAliasTable(args[0].ToString()))));
 			case "ToString":
 				return r.ToString();
 			default:

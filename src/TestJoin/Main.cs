@@ -158,11 +158,17 @@ namespace TestJoin
                     var r0 = dbCmd.Select<TestPerson>();
                     Console.WriteLine("Records en person: '{0}'", r0.Count);
 
+                    vis.ExcludeJoin=false;
+                    vis.Select(r=> new {r.Continent, r.Name}).OrderBy(r=>r.BirthCountry);
                     Console.WriteLine(vis.ToSelectStatement());
                     Console.WriteLine("-----------------------------------------");
 
-                    vis.ExcludeJoin=false;
-                    vis.Where(r=>r.Continent=="Europe");
+                    vis.SelectDistinct(r=>r.Name);
+                    Console.WriteLine(vis.ToSelectStatement());
+                    Console.WriteLine("-----------------------------------------");
+
+                    vis.Select();
+                    vis.Where(r=>r.Continent=="Europe").OrderBy(r=>r.BirthCountry);
                     r0= dbCmd.Select(vis);
                     Console.WriteLine("Records en person r.Continent=='Europe': '{0}'", r0.Count);
 

@@ -694,7 +694,8 @@ namespace ServiceStack.OrmLite
 			case "Alias":	
 			case "As":
 				return string.Format("{0} As {1}", r, 
-					OrmLiteConfig.DialectProvider.GetQuotedColumnName(RemoveQuoteFromAlias(RemoveQuote(args[0].ToString()))));
+					OrmLiteConfig.DialectProvider.GetQuotedColumnName(
+                    RemoveQuoteFromAlias(RemoveQuote(RemoveAliasTable(args[0].ToString())))));
 			case "ToString":
 				return r.ToString();
 			default:
@@ -795,7 +796,9 @@ namespace ServiceStack.OrmLite
             }   
 
             return (string.IsNullOrEmpty(bt))?
-                OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn):
+                string.Format("{0}.{1}",
+                                  OrmLiteConfig.DialectProvider.GetQuotedName(modelDef.TableAlias),
+                                  OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn)):
                     string.Format("{0}.{1}",
                                   OrmLiteConfig.DialectProvider.GetQuotedColumnName(bt),
                                   OrmLiteConfig.DialectProvider.GetQuotedColumnName(fn));
@@ -825,13 +828,18 @@ namespace ServiceStack.OrmLite
 			return exp;				
 		}
 		
+        protected string RemoveAliasTable(string exp)
+        {
+            return exp.Substring(exp.IndexOf(".")+1);
+        }
 		
 		protected bool IsFieldName( string quotedExp){
+            quotedExp=RemoveAliasTable(quotedExp);
 			FieldDefinition fd =
 				modelDef.FieldDefinitions.
 					FirstOrDefault(x=>
 						OrmLiteConfig.DialectProvider.
-						GetQuotedColumnName(x.FieldName) == quotedExp);
+						GetQuotedColumnName(x.FieldName) ==quotedExp );
 			return (fd!=default(FieldDefinition));
 		}
 		
@@ -878,7 +886,6 @@ namespace ServiceStack.OrmLite
                        "":
                        " "+OrmLiteConfig.DialectProvider.GetQuotedName(modelDef.TableAlias)),
                    ((string.IsNullOrEmpty(modelDef.Join)|| ExcludeJoin)?"": modelDef.Join));
-
 		}
 		
         public IList<string> GetAllFields(){
