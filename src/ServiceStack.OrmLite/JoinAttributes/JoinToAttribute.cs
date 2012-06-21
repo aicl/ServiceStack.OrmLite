@@ -31,8 +31,8 @@ namespace ServiceStack.DataAnnotations{
             ParentProperty=parentProperty;
             ChildProperty= childProperty;
 
-            childAlias= child.GetModelDefinition().ModelName;
-            parentAlias= parent!=null? parent.GetModelDefinition().ModelName:null;
+            childAlias= child.GetModelName();
+            parentAlias= parent!=null? parent.GetModelName():null;
 
             joinType = JoinType.Inner;
 

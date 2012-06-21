@@ -9,7 +9,7 @@ namespace ServiceStack.DataAnnotations
     public class SelectFromAttribute:Attribute
     {
         public SelectFromAttribute(Type fromTable)
-            :this(fromTable, fromTable.GetModelDefinition().ModelName){}
+            :this(fromTable, fromTable.GetModelName()){}
         
         public SelectFromAttribute( Type fromTable, string alias)
         {

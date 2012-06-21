@@ -17,7 +17,7 @@ namespace ServiceStack.DataAnnotations{
         public BelongsToAttribute (Type parent, string propertyName)
         {
             Parent= parent;
-            parentAlias= parent.GetModelDefinition().ModelName;
+            parentAlias= parent.GetModelName();
             PropertyName=propertyName;
         }
 
