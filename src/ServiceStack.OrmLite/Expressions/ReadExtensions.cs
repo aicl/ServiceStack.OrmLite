@@ -109,6 +109,16 @@ namespace ServiceStack.OrmLite
 			return dbCmd.GetScalar<TKey>(sql);
 		}
 		
+
+        public static TKey GetScalar<T,TKey>(this IDbCommand dbCmd, SqlExpressionVisitor<T> expression)
+            where T : new()
+        {
+            string sql = expression.ToSelectStatement();
+            return dbCmd.GetScalar<TKey>(sql);
+        }
+
+
+
 		private static T ConvertTo<T>(IDataReader dataReader)
             where T : new()
         {
