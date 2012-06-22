@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
+using ServiceStack.Common;
 
 namespace ServiceStack.OrmLite
 {
@@ -131,8 +132,11 @@ namespace ServiceStack.OrmLite
 					var row = new T();					
 					for (int i = 0; i<dataReader.FieldCount; i++)
 					{						
-						var fieldDef = fieldDefs.FirstOrDefault(
-							x => x.FieldName.ToUpper() == dataReader.GetName(i).ToUpper());
+						string name =dataReader.GetName(i).ToUpper();
+                        var fieldDef = fieldDefs.FirstOrDefault(
+                            x => x.FieldName.ToUpper() == name
+                            ||
+                            ( !x.FieldAlias.IsNullOrEmpty() && x.FieldAlias.ToUpper()==name));
 
 						if (fieldDef == null) continue;
 						var value = dataReader.GetValue(i);
@@ -163,8 +167,11 @@ namespace ServiceStack.OrmLite
 						FieldDefinition fieldDef;
 						if (!fieldDefCache.TryGetValue(i, out fieldDef))
 						{
+                            string name =dataReader.GetName(i).ToUpper();
 						 	fieldDef = fieldDefs.FirstOrDefault(
-								x => x.FieldName.ToUpper() == dataReader.GetName(i).ToUpper());
+								x => x.FieldName.ToUpper() == name
+                                ||
+                                ( !x.FieldAlias.IsNullOrEmpty() && x.FieldAlias.ToUpper()==name));
 							fieldDefCache[i] = fieldDef;
 						}
 

@@ -17,6 +17,7 @@ using System.Diagnostics;
 using System.Linq;
 using ServiceStack.Common.Utils;
 using ServiceStack.Logging;
+using ServiceStack.Common;
 
 namespace ServiceStack.OrmLite
 {
@@ -195,7 +196,10 @@ namespace ServiceStack.OrmLite
 			{
 				foreach (var fieldDef in fieldDefs)
 				{
-					var index = dataReader.GetColumnIndex(fieldDef.FieldName);
+					var index = dataReader.
+                        GetColumnIndex(fieldDef.FieldAlias.IsNullOrEmpty()?
+                                       fieldDef.FieldName:
+                                       fieldDef.FieldAlias);
 					if (index == NotFound) continue;
 					var value = dataReader.GetValue(index);
 					fieldDef.SetValue(objWithProperties, value);
