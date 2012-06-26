@@ -10,6 +10,7 @@
 //
 
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -18,6 +19,7 @@ using ServiceStack.Logging;
 using ServiceStack.Text;
 using System.Diagnostics;
 using ServiceStack.Common.Extensions;
+using ServiceStack.Common.Utils;
 
 namespace ServiceStack.OrmLite
 {
@@ -448,7 +450,13 @@ namespace ServiceStack.OrmLite
             foreach (var fieldDef in modelDef.FieldDefinitions)
             {
                 if( !fieldDef.BelongsToAlias.IsNullOrEmpty()) continue;
-                if (fieldDef.AutoIncrement) continue;
+                if (fieldDef.AutoIncrement) // keep Id value if !=0 
+                {
+                    var tableType = objWithProperties.GetType();
+                    PropertyInfo pi = ReflectionUtils.GetPropertyInfo(tableType, fieldDef.Name);
+                    string sValue= pi.GetValue(objWithProperties,  new object[] { }).ToString();
+                    if(sValue.IsNullOrEmpty() || sValue=="0") continue;
+                }
 				//insertFields contains Property "Name" of fields to insert ( that's how expressions work )
 				if( insertFields.Count>0 && !insertFields.Contains( fieldDef.Name )) continue;
 				
