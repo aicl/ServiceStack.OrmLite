@@ -95,7 +95,9 @@ namespace ServiceStack.OrmLite
                     if(fd!=default(FieldDefinition) ) 
                         parentField= fd.FieldName;
                     else
-                        parentField= ja.ParentProperty;
+                    {
+                        parentField= modelType.GetFieldName(ja.ParentProperty);
+                    }
                     
                     fd= ja.Child.GetModelDefinition().FieldDefinitions.FirstOrDefault(x=>x.Name==ja.ChildProperty);
                     if(fd!=default(FieldDefinition) ) 

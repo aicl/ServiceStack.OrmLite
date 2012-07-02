@@ -139,6 +139,7 @@ namespace TestCommon
        [Alias("PersonName")]
        [StringLength(60)]
        public string Name { get; set;}
+       [Alias("BirthCity_Id")]
        public int BirthCityId { get; set;}
        public int? JobCityId { get; set;}
        
