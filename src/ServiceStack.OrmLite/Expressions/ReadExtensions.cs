@@ -133,10 +133,9 @@ namespace ServiceStack.OrmLite
 					for (int i = 0; i<dataReader.FieldCount; i++)
 					{						
 						string name =dataReader.GetName(i).ToUpper();
-                        var fieldDef = fieldDefs.FirstOrDefault(
-                            x => x.FieldName.ToUpper() == name
-                            ||
-                            ( !x.FieldAlias.IsNullOrEmpty() && x.FieldAlias.ToUpper()==name));
+                        var fieldDef = fieldDefs.FirstOrDefault(x => x.Name.ToUpper() == name);
+                        if(fieldDef==null )
+                            fieldDef=fieldDefs.FirstOrDefault(x=> x.FieldName.ToUpper()==name);
 
 						if (fieldDef == null) continue;
 						var value = dataReader.GetValue(i);
@@ -168,10 +167,9 @@ namespace ServiceStack.OrmLite
 						if (!fieldDefCache.TryGetValue(i, out fieldDef))
 						{
                             string name =dataReader.GetName(i).ToUpper();
-						 	fieldDef = fieldDefs.FirstOrDefault(
-								x => x.FieldName.ToUpper() == name
-                                ||
-                                ( !x.FieldAlias.IsNullOrEmpty() && x.FieldAlias.ToUpper()==name));
+                            fieldDef = fieldDefs.FirstOrDefault(x => x.Name.ToUpper() == name);
+                            if(fieldDef==null )
+                                fieldDef=fieldDefs.FirstOrDefault(x=> x.FieldName.ToUpper()==name);
 							fieldDefCache[i] = fieldDef;
 						}
 
