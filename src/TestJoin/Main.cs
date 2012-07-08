@@ -182,8 +182,16 @@ namespace TestJoin
 
                     Console.WriteLine("El id es :'{0}'", tp.Id);
 
-                    dbCmd.Update(tp);
-                    Console.WriteLine("Actualizados : '{0}'",dbCmd.Update(tp, r=> r.Name, r=>r.Id==0));
+                    Console.WriteLine("Actualizados : '{0}'",dbCmd.UpdateOnly(tp, r=> r.Name, r=>r.Id==0));
+
+                    try{
+
+                        dbCmd.Update(tp); // all fields, except PK are updated where tp.Id==15
+                     }
+                    catch(Exception e){
+                        Console.WriteLine(e.Message);
+                    }
+
 
                     Console.WriteLine("Borrados : '{0}'",dbCmd.Delete<TestPerson>( r=>r.Id==0));
 

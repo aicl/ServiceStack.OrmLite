@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
-
+using ServiceStack.Text;
 using ServiceStack.Common;
+
 namespace ServiceStack.OrmLite
 {
 	public abstract class SqlExpressionVisitor<T>
@@ -286,6 +287,32 @@ namespace ServiceStack.OrmLite
 			                     OrmLiteConfig.DialectProvider.GetQuotedTableName(modelDef),
 			                     WhereExpression);
 		}
+
+
+        public virtual string ToUpdateStatement(T item, bool excludeDefaults = false)
+        {
+            var setFields = new StringBuilder();
+            var dialectProvider = OrmLiteConfig.DialectProvider;
+
+            foreach (var fieldDef in modelDef.FieldDefinitions)
+            {
+                if (!fieldDef.BelongsToAlias.IsNullOrEmpty() || 
+                    (updateFields.Count > 0 && !updateFields.Contains(fieldDef.Name))) continue; // added
+                var value = fieldDef.GetValue(item);
+                if (excludeDefaults && (value == null || value.Equals(value.GetType().GetDefaultValue()))) continue; //GetDefaultValue?
+
+                fieldDef.GetQuotedValue(item);
+
+                if (setFields.Length > 0) setFields.Append(",");
+                setFields.AppendFormat("{0} = {1}",
+                    dialectProvider.GetQuotedColumnName(fieldDef.FieldName),
+                    dialectProvider.GetQuotedValue(value, fieldDef.FieldType));
+            }
+
+            return string.Format("UPDATE {0} SET {1} {2}",
+                dialectProvider.GetQuotedTableName(modelDef), setFields, WhereExpression);
+        }
+
 
 
 		public virtual string ToSelectStatement(){

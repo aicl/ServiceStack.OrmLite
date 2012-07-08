@@ -35,6 +35,8 @@ namespace ServiceStack.OrmLite
 
 	    string GetQuotedTableName(ModelDefinition modelDef);
 
+        string GetQuotedTableName(string tableName);
+
 		string GetQuotedColumnName(string columnName);
         
 		string GetQuotedName(string columnName);

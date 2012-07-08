@@ -330,6 +330,11 @@ namespace ServiceStack.OrmLite
             return string.Format("\"{0}\"", namingStrategy.GetTableName(modelDef.ModelName));
         }
 
+        public virtual string GetQuotedTableName(string tableName)
+        {
+            return string.Format("\"{0}\"", namingStrategy.GetTableName(tableName));
+        }
+
 		public virtual string GetQuotedColumnName(string columnName)
 		{
 			return string.Format("\"{0}\"", namingStrategy.GetColumnName(columnName));
