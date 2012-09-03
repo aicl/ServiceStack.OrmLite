@@ -17,11 +17,13 @@ namespace ServiceStack.OrmLite.MySql
 
     	private MySqlDialectProvider()
         {
+            DefaultDecimalPrecision=38;
+            DefaultDecimalScale=6;
             base.AutoIncrementDefinition = "AUTO_INCREMENT";
             base.IntColumnDefinition = "int(11)";
             base.BoolColumnDefinition = "tinyint(1)";
             base.TimeColumnDefinition = "time";
-            base.DecimalColumnDefinition = "decimal(38,6)";
+            //base.DecimalColumnDefinition = "decimal(38,6)";
             base.GuidColumnDefinition = "char(32)";
             base.DefaultStringLength = 255;
             base.InitColumnTypeMap();
@@ -166,6 +168,14 @@ namespace ServiceStack.OrmLite.MySql
                 sql.AppendFormat("{0} {1}", GetQuotedColumnName(fieldDefinition.FieldName), TextColumnDefinition);
                 sql.Append(fieldDefinition.IsNullable ? " NULL" : " NOT NULL");
                 return sql.ToString();
+            }
+
+            if( fieldDefinition.FieldType==typeof(Decimal) ){
+                return string.Format("{0} {1}({2},{3})",
+                                     GetQuotedColumnName(fieldDefinition.FieldName),
+                                     DecimalColumnDefinition, 
+                                     fieldDefinition.FieldLength.GetValueOrDefault(DefaultDecimalPrecision),
+                                     fieldDefinition.Scale.GetValueOrDefault(DefaultDecimalScale) );
             }
 
             return base.GetColumnDefinition(
