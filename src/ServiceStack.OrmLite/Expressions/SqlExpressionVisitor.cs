@@ -565,13 +565,18 @@ namespace ServiceStack.OrmLite
 		
 		protected virtual string  VisitMemberAccess(MemberExpression m)
         {
-			if(m.Expression != null && 
-			   m.Expression.NodeType==ExpressionType.Parameter 
-			   && m.Expression.Type== typeof(T)){
+			if(m.Expression != null &&  (
+			   	(m.Expression.NodeType==ExpressionType.Parameter 
+			   		&& m.Expression.Type== typeof(T))
+					|| (m.Expression.NodeType==ExpressionType.Convert 
+			    		&& m.Expression.Type.IsInterface )
+				)
+			   ){
 				string o = GetFieldName( m.Member.Name );
 				return o;
 			}
 			else{
+
 				var member = Expression.Convert(m, typeof(object));
 			    var lambda = Expression.Lambda<Func<object>>(member);
     			var getter = lambda.Compile();
