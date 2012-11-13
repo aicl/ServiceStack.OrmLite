@@ -750,6 +750,47 @@ namespace ServiceStack.OrmLite.Firebird
 			return result > 0;
 		}
 
+		public override string ToAddColumnStatement(Type modelType, FieldDefinition fieldDef){
+
+			var column = GetColumnDefinition(fieldDef.FieldName,
+			                                                  fieldDef.FieldType,
+			                                                  fieldDef.IsPrimaryKey,
+			                                                  fieldDef.AutoIncrement,
+			                                                  fieldDef.IsNullable,
+			                                                  fieldDef.FieldLength,
+			                                                  fieldDef.Scale,
+			                                                  fieldDef.DefaultValue);
+			return string.Format("ALTER TABLE {0} ADD {1} ;",
+			                               GetQuotedTableName(modelType.GetModelName()),
+			                               column);
+		}
+
+		public override string ToAlterColumnStatement<T>(Type modelType, FieldDefinition fieldDef){
+
+
+			var column = GetColumnDefinition(fieldDef.FieldName,
+			                                                  fieldDef.FieldType,
+			                                                  fieldDef.IsPrimaryKey,
+			                                                  fieldDef.AutoIncrement,
+			                                                  fieldDef.IsNullable,
+			                                                  fieldDef.FieldLength,
+			                                                  fieldDef.Scale,
+			                                                  fieldDef.DefaultValue);
+			return string.Format("ALTER TABLE {0} ALTER {1} ;",
+			                               GetQuotedTableName(modelType.GetModelName()),
+			                               column);
+		}
+
+		public override string ToChangeColumnNameStatement(Type modelType,
+		                                                  FieldDefinition fieldDef,
+		                                                  string oldColumnName){
+
+			return string.Format("ALTER TABLE {0} ALTER {1} TO {2} ;",
+			                     GetQuotedTableName(modelType.GetModelName()),
+			                     GetQuotedColumnName(oldColumnName),
+			                     GetQuotedColumnName(fieldDef.FieldName));
+		}
+
 	}
 }
 

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{AC885D48-AB80-4CF4-B628-AE99C80F301C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TestNewJoin</RootNamespace>
+    <AssemblyName>TestNewJoin</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="ServiceStack.Common">
+      <HintPath>..\..\lib\ServiceStack.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Interfaces">
+      <HintPath>..\..\lib\ServiceStack.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="ServiceStack.Text">
+      <HintPath>..\..\lib\ServiceStack.Text.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Dynamic" />
+    <Reference Include="MySql.Data">
+      <HintPath>..\..\lib\mysql.data.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Test.cs" />
+    <Compile Include="MoreJoin.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\TestCommon\TestCommon.csproj">
+      <Project>{EEF45A05-6CAA-4D54-8FD8-60570D876155}</Project>
+      <Name>TestCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStack.OrmLite\ServiceStack.OrmLite.csproj">
+      <Project>{96179AC6-F6F1-40C3-9FDD-4F6582F54C5C}</Project>
+      <Name>ServiceStack.OrmLite</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ServiceStack.OrmLite.MySql\ServiceStack.OrmLite.MySql.csproj">
+      <Project>{FD20F088-ACC0-4979-AC0C-8C541C2E7DE5}</Project>
+      <Name>ServiceStack.OrmLite.MySql</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

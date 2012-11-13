@@ -1,10 +1,7 @@
 using System;
 using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using ServiceStack.Logging;
-using ServiceStack.Common;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace ServiceStack.OrmLite
 {
@@ -23,15 +20,79 @@ namespace ServiceStack.OrmLite
 			AlterTable(dbCmdm, typeof(T),command);
 		}
 
-
 		public static void AlterTable(this IDbCommand dbCmdm, Type modelType, string command)
 		{
 			string sql = string.Format("ALTER TABLE {0} {1};", 
 			                           OrmLiteConfig.DialectProvider.GetQuotedTableName( modelType.GetModelDefinition()),
 			                           command);
-
 			dbCmdm.ExecuteSql(sql);
 		}
+
+
+		public static void AddColumn(this IDbCommand dbCmdm, Type modelType, FieldDefinition fieldDef){
+			var command = OrmLiteConfig.DialectProvider.ToAddColumnStatement(modelType, fieldDef);
+			dbCmdm.ExecuteSql(command);
+		}
+
+		public static void AddColumn<T>(this IDbCommand dbCmdm,
+		                                Expression<Func<T,object>> field)
+		{
+			var modelDef = ModelDefinition<T>.Definition;
+			var name = OrmLiteConfig.DialectProvider.FieldName(field);
+			var fieldDef= modelDef.FieldDefinitions.First(f=>f.Name==name );
+			dbCmdm.AddColumn(typeof(T), fieldDef);
+		}
+
+
+		public static void AlterColumn(this IDbCommand dbCmdm, Type modelType, FieldDefinition fieldDef){
+			var command = OrmLiteConfig.DialectProvider.ToAddColumnStatement(modelType, fieldDef);
+			dbCmdm.ExecuteSql(command);
+		}
+
+		public static void AlterColumn<T>(this IDbCommand dbCmdm,
+		                                  Expression<Func<T,object>> field)
+		{
+			var modelDef = ModelDefinition<T>.Definition;
+			var name = OrmLiteConfig.DialectProvider.FieldName(field);
+			var fieldDef= modelDef.FieldDefinitions.First(f=>f.Name== name);
+			dbCmdm.AlterColumn(typeof(T), fieldDef);
+
+		}
+
+		public static void ChangeColumnName(this IDbCommand dbCmdm,Type modelType,
+		                                       FieldDefinition fieldDef,
+		                                       string oldColumnName)
+		{
+			var command = OrmLiteConfig.DialectProvider.ToChangeColumnNameStatement(modelType, fieldDef, oldColumnName);
+			dbCmdm.ExecuteSql(command);
+
+		}
+
+		public static void ChangeColumnName<T>(this IDbCommand dbCmdm,
+		                                       Expression<Func<T,object>> field,
+		                                       string oldColumnName)
+		{
+			var modelDef = ModelDefinition<T>.Definition;
+			var name = OrmLiteConfig.DialectProvider.FieldName(field);
+			var fieldDef= modelDef.FieldDefinitions.First(f=>f.Name== name);
+			dbCmdm.ChangeColumnName(typeof(T), fieldDef, oldColumnName);
+
+		}
+
+		public static void DropColumn(this IDbCommand dbCmdm,Type modelType, string columnName)
+		{
+			string command = string.Format("ALTER TABLE {0} DROP  {1};",
+			                               OrmLiteConfig.DialectProvider.GetQuotedTableName(modelType.GetModelName()),
+			                               OrmLiteConfig.DialectProvider.GetQuotedName(columnName));
+
+			dbCmdm.ExecuteSql(command);
+		}
+
+		public static void DropColumn<T>(this IDbCommand dbCmdm,string columnName)
+		{
+			dbCmdm.DropColumn(typeof(T), columnName);
+		}
+
 	
 		public static void AddForeignKey<T,TForeign>(this IDbCommand dbCmdm,
 		                                               Expression<Func<T,object>> field,
@@ -40,28 +101,12 @@ namespace ServiceStack.OrmLite
 		                                               OnFkOption onDelete,
 		                                               string foreignKeyName=null)
 		{
-			var sourceMD = ModelDefinition<T>.Definition;
 
-			var fieldName= sourceMD.FieldDefinitions.First(f=>f.Name== FieldName(field)).FieldName;
-
-			var referenceMD=ModelDefinition<TForeign>.Definition;
-
-			var referenceFieldName= referenceMD.FieldDefinitions.First(f=>f.Name== FieldName(foreignField)).FieldName;
-
-			string name =
-				OrmLiteConfig.DialectProvider.GetQuotedName(foreignKeyName.IsNullOrEmpty()?
-				                                            "fk_"+sourceMD.ModelName+"_"+ fieldName+"_"+referenceFieldName:
-				                                            foreignKeyName);
-
-			string command = string.Format("ALTER TABLE {0} ADD CONSTRAINT {1} FOREIGN KEY ({2}) REFERENCES {3} ({4}) ON UPDATE {5} ON DELETE {6};",
-			                               OrmLiteConfig.DialectProvider.GetQuotedTableName(sourceMD.ModelName),
-			                               name,
-			                               OrmLiteConfig.DialectProvider.GetQuotedColumnName(fieldName),
-			                               OrmLiteConfig.DialectProvider.GetQuotedTableName(referenceMD.ModelName),
-			                               OrmLiteConfig.DialectProvider.GetQuotedColumnName(referenceFieldName),
-			                               FkOptionToString(onUpdate),
-			                               FkOptionToString(onDelete));
-
+			string command = OrmLiteConfig.DialectProvider.ToAddForeignKeyStatement(field,
+			                                                                        foreignField,
+			                                                                        onUpdate,
+			                                                                        onDelete,
+			                                                                        foreignKeyName);
 			dbCmdm.ExecuteSql(command);
 
 		}
@@ -79,20 +124,7 @@ namespace ServiceStack.OrmLite
 		                                     string indexName=null, bool unique=false)
 		{
 
-			var sourceMD = ModelDefinition<T>.Definition;
-			var fieldName= sourceMD.FieldDefinitions.First(f=>f.Name== FieldName(field)).FieldName;
-
-			string name =
-				OrmLiteConfig.DialectProvider.GetQuotedName(indexName.IsNullOrEmpty()?
-				                                            (unique?"uidx":"idx") +"_"+sourceMD.ModelName+"_"+fieldName:
-				                                            indexName);
-
-			string command = string.Format("CREATE{0}INDEX {1} ON {2}({3})",
-			                               unique?" UNIQUE ": " ",
-			                               name,
-			                               OrmLiteConfig.DialectProvider.GetQuotedTableName(sourceMD.ModelName),
-			                               OrmLiteConfig.DialectProvider.GetQuotedColumnName(fieldName)
-			                               );
+			var command = OrmLiteConfig.DialectProvider.ToCreateIndexStatement(field, indexName, unique);
 			dbCmdm.ExecuteSql(command);
 		}
 
@@ -104,23 +136,6 @@ namespace ServiceStack.OrmLite
 			dbCmdm.ExecuteSql(command);
 		}
 
-
-		static string FieldName<T>(Expression<Func<T,object>> field){
-			var lambda = (field as LambdaExpression);
-			var operand = (lambda.Body as UnaryExpression).Operand ;
-			return (operand as MemberExpression).Member.Name;
-		}
-
-
-		static string FkOptionToString(OnFkOption option){
-			switch(option){
-			case OnFkOption.Cascade: return "CASCADE";
-			case OnFkOption.NoAction: return "NO ACTION"; 
-			case OnFkOption.Restrict: return "RESTRICT"; 
-			case OnFkOption.SetNull: return "SET NULL"; 
-			default: return "RESTRICT";
-			}
-		}
 
 	}
 }
