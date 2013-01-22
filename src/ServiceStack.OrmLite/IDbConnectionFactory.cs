@@ -1,3 +1,4 @@
+/*
 using System.Data;
 
 namespace ServiceStack.OrmLite
@@ -8,3 +9,4 @@ namespace ServiceStack.OrmLite
 		IDbConnection CreateDbConnection();
 	}
 }
+*/
