@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Collections.Generic;
 
 namespace ServiceStack.OrmLite
 {
@@ -41,6 +42,22 @@ namespace ServiceStack.OrmLite
 
 			this.ConnectionFilter = x => x;
 		}
+
+		public OrmLiteConnectionFactory(string connectionString, bool autoDisposeConnection, IOrmLiteDialectProvider dialectProvider, bool setGlobalConnection)
+		{
+			ConnectionString = connectionString;
+			AutoDisposeConnection = autoDisposeConnection;
+			this.DialectProvider = dialectProvider ?? OrmLiteConfig.DialectProvider;
+			
+			if (setGlobalConnection && dialectProvider != null)
+			{
+				OrmLiteConfig.DialectProvider = dialectProvider;
+			}
+			
+			this.ConnectionFilter = x => x;
+		}
+
+		public IOrmLiteDialectProvider DialectProvider { get; set; }
 
 		public string ConnectionString { get; set; }
 
@@ -90,6 +107,38 @@ namespace ServiceStack.OrmLite
 
 			return ConnectionFilter(connection);
 		}
+
+		public IDbConnection OpenDbConnection(string connectionKey)
+		{
+			OrmLiteConnectionFactory factory;
+			if (!NamedConnections.TryGetValue(connectionKey, out factory))
+				throw new KeyNotFoundException("No factory registered is named " + connectionKey);
+			
+			IDbConnection connection = factory.AutoDisposeConnection
+				? new OrmLiteConnection(factory)
+					: factory.OrmLiteConnection;
+			
+			connection = factory.ConnectionFilter(connection);
+			connection.Open();
+			
+			return connection;
+		}
+		
+		private static Dictionary<string, OrmLiteConnectionFactory> namedConnections;
+		public static Dictionary<string, OrmLiteConnectionFactory> NamedConnections
+		{
+			get
+			{
+				return namedConnections = namedConnections
+					?? (namedConnections = new Dictionary<string, OrmLiteConnectionFactory>());
+			}
+		}
+		
+		public void RegisterConnection(string connectionKey, string connectionString, IOrmLiteDialectProvider dialectProvider, bool autoDisposeConnection = true)
+		{
+			NamedConnections[connectionKey] = new OrmLiteConnectionFactory(connectionString, autoDisposeConnection, dialectProvider, autoDisposeConnection);
+		}
+
 	}
 
 	public static class OrmLiteConnectionFactoryExtensions
@@ -111,5 +160,38 @@ namespace ServiceStack.OrmLite
 				return runDbCommandsFn(dbCmd);
 			}
 		}
+
+		public static void Run(this IDbConnectionFactory connectionFactory, Action<IDbCommand> runDbCommandsFn)
+		{
+			using (var dbConn = connectionFactory.OpenDbConnection())
+			using (var dbCmd = dbConn.CreateCommand())
+			{
+				runDbCommandsFn(dbCmd);
+			}
+		}
+		
+		public static T Run<T>(this IDbConnectionFactory connectionFactory, Func<IDbCommand, T> runDbCommandsFn)
+		{
+			using (var dbConn = connectionFactory.OpenDbConnection())
+				using (var dbCmd = dbConn.CreateCommand())
+			{
+				return runDbCommandsFn(dbCmd);
+			}
+		}
+
+		public static IDbConnection Open(this IDbConnectionFactory connectionFactory)
+		{
+			return connectionFactory.OpenDbConnection();
+		}
+		
+		public static IDbConnection Open(this IDbConnectionFactory connectionFactory, string namedConnection)
+		{
+			return ((OrmLiteConnectionFactory)connectionFactory).OpenDbConnection(namedConnection);
+		}
+		
+		public static IDbConnection OpenDbConnection(this IDbConnectionFactory connectionFactory, string namedConnection)
+		{
+			return ((OrmLiteConnectionFactory)connectionFactory).OpenDbConnection(namedConnection);
+		}		
 	}
 }
